@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Manager | MongoDB Atlas</title>
+    <style>
+        :root {
+            --primary-teal: #008080;
+            --dark-teal: #005f5f;
+            --bg-black: #121212;
+            --card-black: #1e1e1e;
+            --text-white: #e0e0e0;
+            --accent-teal: #00ced1;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            max-width: 700px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            background-color: var(--bg-black);
+            color: var(--text-white);
+        }
+
+        h2 { color: var(--accent-teal); border-bottom: 2px solid var(--primary-teal); padding-bottom: 10px; }
+
+        form { 
+            background: var(--card-black); 
+            padding: 25px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        input { 
+            display: block; 
+            width: 100%; 
+            margin-bottom: 15px; 
+            padding: 12px; 
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        input:focus { outline: none; border-color: var(--accent-teal); }
+
+        button { 
+            width: 100%;
+            padding: 12px; 
+            background-color: var(--primary-teal); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: var(--accent-teal); transform: translateY(-2px); }
+
+        .book-item { 
+            background: var(--card-black);
+            border-left: 4px solid var(--primary-teal); 
+            padding: 15px; 
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .book-item strong { color: var(--accent-teal); font-size: 1.2em; }
+        .book-item em { color: #888; }
+        .book-id { color: #555; font-size: 0.8em; margin-top: 5px; display: block; }
+    </style>
+</head>
+<body>
+    <h2>Add New Book to DB</h2>
+    <form id="bookForm">
+        <input type="text" id="title" placeholder="Book Title" required>
+        <input type="text" id="author" placeholder="Author Name" required>
+        <input type="text" id="genre" placeholder="Genre (e.g. Fantasy, Science)" required>
+        <button type="submit">Send to MongoDB Atlas</button>
+    </form>
+
+    <h2>Library Collection</h2>
+    <div id="bookList">Loading data from cloud...</div>
+
+    <script>
+        const form = document.getElementById('bookForm');
+        
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                genre: document.getElementById('genre').value
+            };
+            
+            const response = await fetch('/books', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                form.reset();
+                loadBooks();
+            }
+        };
+
+        async function loadBooks() {
+            try {
+                const res = await fetch('/books');
+                const books = await res.json();
+                const list = document.getElementById('bookList');
+                
+                if (books.length === 0) {
+                    list.innerHTML = "<p>No books found in your Atlas Cluster.</p>";
+                    return;
+                }
+
+                list.innerHTML = books.map(b => `
+                    <div class="book-item">
+                        <strong>${b.title}</strong> — ${b.author} <br>
+                        <em>Category: ${b.genre}</em>
+                        <span class="book-id">Database ID: ${b._id}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('bookList').innerText = "Error loading data.";
+            }
+        }
+        loadBooks();
+    </script>
+</body>
+</html>
